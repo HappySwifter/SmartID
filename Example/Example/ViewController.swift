@@ -29,14 +29,12 @@ class ViewController: UIViewController, SEResultDelegate {
         matrixTable.reloadData()
     }
 
-    var matrix = EIGMatrix.identity(rows: 2, cols: 2)
     let formatter = NumberFormatter()
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
         invertButton.layer.cornerRadius = 6.0
-        invertButton.dropShadow()
 
 //        matrixTable.delegate = self
 //        matrixTable.dataSource = self

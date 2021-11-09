@@ -7,7 +7,7 @@ let package = Package(
     products: [
         .library(
             name: "SwiftyEigen",
-            targets: ["ObjCEigen"/*, "SwiftyEigen"*/]
+            targets: ["ObjCEigen"]
         )
     ],
     dependencies: [],
@@ -17,13 +17,7 @@ let package = Package(
             path: "Sources/ObjC",
             cxxSettings: [
                 .headerSearchPath("../CPP/"),
-//                .define("EIGEN_MPL2_ONLY")
             ]
         ),
-//        .target(
-//            name: "SwiftyEigen",
-//            dependencies: ["ObjCEigen"],
-//            path: "Sources/Swift"
-//        )
     ]
 )
