@@ -1,13 +1,5 @@
-//
-//  ViewController.swift
-//  SwiftyEigen
-//
-//  Created by ksemianov on 12/03/2020.
-//  Copyright (c) 2020 ksemianov. All rights reserved.
-//
 
 import UIKit
-//import SwiftyEigen
 import ObjCEigen
 
 class ViewController: UIViewController, SEResultDelegate {
