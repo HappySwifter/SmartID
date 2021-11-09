@@ -12,11 +12,11 @@ import ObjCEigen
 
 class ViewController: UIViewController, SEResultDelegate {
     func didRecognize(_ fields: [AnyHashable : Any]!) {
-        print(fields)
+        print(fields ?? "")
     }
 
     func didUpdateHint(_ points: [Any]!) {
-        print(points)
+        print(points ?? "")
     }
 
     @IBOutlet weak var matrixTable: UICollectionView!
@@ -24,7 +24,7 @@ class ViewController: UIViewController, SEResultDelegate {
 
     @IBAction func didTapInvert(_ sender: Any) {
         let wrap = SEWrapper(delegate: self, type: SESessionType.SNILS)
-        print(wrap)
+        print(wrap ?? "")
 //        matrix = matrix.inverse()
         matrixTable.reloadData()
     }
