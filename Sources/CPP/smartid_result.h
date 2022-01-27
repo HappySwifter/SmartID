@@ -89,7 +89,7 @@ public:
    */
   OcrChar(const std::vector<OcrCharVariant>& ocr_char_variants,
           bool is_highlighted, bool is_corrected,
-          const Rectangle& ocr_char_rect = {});
+          const Rectangle& ocr_char_rect);
 
   /// OcrChar dtor
   ~OcrChar();
@@ -183,7 +183,7 @@ public:
    */
   StringField(const std::string& name, const OcrString& value,
               bool is_accepted, double confidence,
-              const std::map<std::string, std::string>& attributes = {}) throw(std::exception);
+              const std::map<std::string, std::string>& attributes) throw(std::exception);
 
   /**
    * @brief StringField ctor from utf8-string value
@@ -198,7 +198,7 @@ public:
    */
   StringField(const std::string& name, const std::string& value,
               bool is_accepted, double confidence,
-              const std::map<std::string, std::string>& attributes = {}) throw(std::exception);
+              const std::map<std::string, std::string>& attributes) throw(std::exception);
 
   /**
    * @brief Destructor
