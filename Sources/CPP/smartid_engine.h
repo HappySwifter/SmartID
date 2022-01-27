@@ -12,8 +12,8 @@
 #define SMARTID_ENGINE_SMARTID_ENGINE_H_INCLUDED_
 
 #if defined _MSC_VER
-#pragma warning(push)  
-#pragma warning(disable : 4290)  
+#pragma warning(push)
+#pragma warning(disable : 4290)
 #endif
 
 #include <string>
@@ -143,10 +143,74 @@ public:
    */
   void RemoveOption(const std::string& name) throw(std::exception);
 
+  /**
+  * @brief Get list of enabled fields for document type
+  */
+  const std::map<std::string, std::vector<std::string> >&
+      GetEnabledFieldNames() const;
+
+  /**
+  * @brief Enable fields by name
+  * @param doctype - type of document
+  * @param field_name - name of field
+  */
+  void EnableField(const std::string& doctype, const std::string& field_name);
+  /**
+  * @brief Disable string fields by name
+  * @param doctype - type of document
+  * @param field_name - name of field
+  */
+  void DisableField(const std::string& doctype, const std::string& field_name);
+
+  /**
+  * @brief Set(modify) an enabled string fields by names
+  * @param doctype - type of document
+  * @param field_names - list of string field names
+  */
+  void SetEnabledFields(
+      const std::string& doctype, const std::vector<std::string>& field_names);
+
+  /**
+  * @brief Get set of enabled string fields
+  * @param doctype - type of document
+  * @return list of supported field names for document
+  *
+  * @throws std::invalid_argument if there is no such document
+  */
+  const std::vector<std::string>& GetSupportedFieldNames(
+      const std::string& doctype) throw(std::exception);
+
+  /**
+   * @brief Returns current bundle mode
+   * @return string name of current bundle mode
+   */
+  const std::string& GetCurrentMode() const;
+
+  /**
+   * @brief Sets current bundle mode
+   * @param mode - string name of new current bundle mode
+   */
+  void SetCurrentMode(const std::string& mode) throw(std::exception);
+
+  /**
+   * @brief Gets list of available bundle mode names
+   * @return list of available modes
+   */
+  const std::vector<std::string>& GetAvailableModes() const;
+
 protected:
-  std::vector<std::vector<std::string> > supported_document_types_;
-  std::vector<std::string> enabled_document_types_;
+  std::vector<std::string> supported_modes_;
+  std::string current_mode_;
+
+  std::map<std::string, std::vector<std::vector<std::string> > >
+      supported_document_types_;
+  std::map<std::string, std::vector<std::string> > enabled_document_types_;
+
   std::map<std::string, std::string> options_;
+  std::map<std::string, std::map<std::string, std::vector<std::string> > >
+      supported_fields_;
+  std::map<std::string, std::map<std::string, std::vector<std::string> > >
+      enabled_fields_;
 
   /// Disabled default constructor - use RecognitionEngine factory method instead
   SessionSettings();
@@ -159,7 +223,7 @@ protected:
 class SMARTID_DLL_EXPORT RecognitionSession {
 public:
   /// RecognitionSession dtor
-  virtual ~RecognitionSession() { }
+  virtual ~RecognitionSession();
 
   /**
    * @brief Processes the uncompressed RGB image stored in memory line by line
@@ -330,6 +394,83 @@ public:
       ImageOrientation image_orientation = Landscape) throw(std::exception);
 
   /**
+   * @brief  Runs recognition process on the specified image data (e.g.
+   *         compressed with JPEG or PNG)
+   * @param  data                Pointer to the (e.g. compressed) image data
+   * @param  data_length         Compressed image data length in bytes
+   * @param  roi                 Rectangle of interest (the system will not
+   *                             process anything outside this rectangle)
+   * @param  image_orientation   Current image orientation to perform proper
+   *                             rotation to landscape
+   *
+   * @return recognition result (integrated in the session)
+   * @throws std::exception     If image data can't be decoded or
+   *                            if processing error occurs
+   */
+  virtual RecognitionResult ProcessImageData(
+      unsigned char* data,
+      size_t data_length,
+      const Rectangle& roi,
+      ImageOrientation image_orientation = Landscape) throw(std::exception);
+
+  /**
+   * @brief  Runs recognition process on the specified image data (e.g.
+   *         compressed with JPEG or PNG), using ROI as full image
+   * @param  data                Pointer to the (e.g. compressed) image data
+   * @param  data_length         Compressed image data length in bytes
+   * @param  image_orientation   Current image orientation to perform proper
+   *                             rotation to landscape
+   *
+   * @return recognition result (integrated in the session)
+   * @throws std::exception     If image data can't be decoded or
+   *                            if processing error occurs
+   */
+  virtual RecognitionResult ProcessImageData(
+      unsigned char* data,
+      size_t data_length,
+      ImageOrientation image_orientation = Landscape) throw(std::exception);
+
+  /**
+   * @brief  Runs recognition process on the specified image data (e.g.
+   *         compressed with JPEG or PNG) encoded in base64
+   * @param  base64_image_data   Encoded image
+   * @param  roi                 Rectangle of interest (the system will not
+   *                             process anything outside this rectangle)
+   * @param  image_orientation   Current image orientation to perform proper
+   *                             rotation to landscape
+   *
+   * @return recognition result (integrated in the session)
+   * @throws std::exception     If image data can't be decoded or
+   *                            if processing error occurs
+   */
+  virtual RecognitionResult ProcessImageDataBase64(
+      const std::string& base64_image_data,
+      const Rectangle& roi,
+      ImageOrientation image_orientation = Landscape) throw(std::exception);
+
+  /**
+   * @brief  Runs recognition process on the specified image data (e.g.
+   *         compressed with JPEG or PNG) encoded in base64
+   * @param  base64_image_data   Encoded image
+   * @param  image_orientation   Current image orientation to perform proper
+   *                             rotation to landscape
+   *
+   * @return recognition result (integrated in the session)
+   * @throws std::exception     If image data can't be decoded or
+   *                            if processing error occurs
+   */
+  virtual RecognitionResult ProcessImageDataBase64(
+      const std::string& base64_image_data,
+      ImageOrientation image_orientation = Landscape) throw(std::exception);
+
+  /**
+   * @brief  Gets session state object - optional information about OCR state
+   * @return SessionState object. Caller is responsible for deallocation.
+   * @throws std::exception if the session state cannot be created
+   */
+  virtual SessionState* GetSessionState() const throw(std::exception) = 0;
+
+  /**
    * @brief Resets the internal state of the session
    */
   virtual void Reset() = 0;
@@ -344,21 +485,27 @@ public:
   /**
    * @brief RecognitionEngine ctor from configuration path
    * @param config_path - path to configuration file
+   * @param lazy_configuration - whether to use engine's
+   *    lazy component configuration capabilities
    *
    * @throws std::exception if configuration error occurs
    */
-  RecognitionEngine(const std::string& config_path) throw(std::exception);
+  RecognitionEngine(const std::string& config_path,
+                    bool lazy_configuration = true) throw(std::exception);
 
   /**
    * @brief RecognitionEngine ctor from configuration buffer. Only for
    *        configuration from ZIP archive buffers.
    * @param config_data - pointer to configuration ZIP buffer start
    * @param data_length - size of the configuration ZIP buffer
+   * @param lazy_configuration - whether to use engine's
+   *    lazy component configuration capabilities
    *
    * @throws std::exception if configuration error occurs
    */
   RecognitionEngine(unsigned char* config_data,
-                    size_t data_length) throw(std::exception);
+                    size_t data_length,
+                    bool lazy_configuration = true) throw(std::exception);
 
   /// Recognition Engine dtor
   ~RecognitionEngine();
@@ -405,7 +552,7 @@ private:
 } } // namespace se::smartid
 
 #if defined _MSC_VER
-#pragma warning(pop)  
+#pragma warning(pop)
 #endif
 
 #endif // SMARTID_ENGINE_SMARTID_ENGINE_H_INCLUDED

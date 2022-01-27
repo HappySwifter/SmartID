@@ -17,9 +17,13 @@ All rights reserved.
 #endif
 
 #if defined _WIN32 && SMARTID_ENGINE_EXPORTS
-#define SMARTID_DLL_EXPORT __declspec(dllexport)
+# define SMARTID_DLL_EXPORT __declspec(dllexport)
 #else
-#define SMARTID_DLL_EXPORT
+# if defined(__clang__) || defined(__GNUC__)
+#  define SMARTID_DLL_EXPORT __attribute__ ((visibility ("default")))
+# else
+#  define SMARTID_DLL_EXPORT
+# endif
 #endif
 
 #include <stdexcept>
@@ -35,6 +39,11 @@ public:
    * @brief Constructor (x = y = width = height = 0)
    */
   Rectangle();
+
+  /**
+   * @brief Destructor
+   */
+  ~Rectangle();
 
   /**
    * @brief Constructor from coordinates
@@ -63,6 +72,11 @@ public:
   Point();
 
   /**
+   * @brief Destructor
+   */
+  ~Point();
+
+  /**
    * @brief  Constructor
    * @param  x - x-coordinate of a point in pixels (top-left corner is origin)
    * @param  y - y-coordinate of a point in pixels (top-left corner is origin)
@@ -82,6 +96,11 @@ public:
    * @brief  Constructor
    */
   Quadrangle();
+
+  /**
+   * @brief Destructor
+   */
+  ~Quadrangle();
 
   /**
    * @brief  Constructor
@@ -129,7 +148,13 @@ public:
    */
   void SetPoint(int index, const Point& value) throw(std::exception);
 
-public:
+  /**
+   * @brief Computes and returns bounding rectangle for quadrangle's points
+   * @return computed bounding rectangle
+   */
+  Rectangle GetBoundingRectangle() const;
+
+private:
   /// Vector of quadrangle vertices in order:
   ///     top-left, top-right, bottom-right, bottom-left
   Point points[4];
@@ -229,6 +254,13 @@ public:
       char* out_buffer, int buffer_length) const throw(std::exception);
 
   /**
+   * @brief EstimateFocusScore
+   * @return Estimated focus score of Image in range
+   */
+
+  double EstimateFocusScore(double quantile = 0.95) const throw(std::exception);
+
+  /**
    * @brief Returns required buffer size for Base64 JPEG representation of an
    * image. WARNING: will perform one extra JPEG coding of an image
    * @return Buffer size in bytes
@@ -269,6 +301,12 @@ public:
   int GetHeight() const;
 
   /**
+   * @brief Getter for image stride
+   * @return Image row size in bytes
+   */
+  int GetStride() const;
+
+  /**
    * @brief Getter for number of image channels
    * @return Image number of channels
    */
@@ -284,14 +322,42 @@ public:
    * @brief Forces memory ownership - allocates new image data and sets
    * memown to true if memown was false, otherwise does nothing
    */
-  void ForceMemoryOwner();
+  void ForceMemoryOwner() throw(std::exception);
 
   /**
    * @brief Scale (resize) this image to new width and height, force memory ownership
    * @param new_width New image width
    * @param new_height New image height
    */
-  void Resize(int new_width, int new_height);
+  void Resize(int new_width, int new_height) throw(std::exception);
+
+  /**
+   * @brief Projectively crop a region of image, forces memory ownership
+   * @param quad - a region of image to crop
+   */
+  void Crop(const Quadrangle& quad) throw(std::exception);
+
+  /**
+   * @brief Projectively crop a region of image, to a new size, forces memory ownership
+   * @param quad - a region of image to crop
+   * @param width - new width of the cropped image
+   * @param height - new height of the cropped image
+   */
+  void Crop(const Quadrangle& quad, int width, int height) throw(std::exception);
+
+  /**
+   * @brief Masks image region specified by rectangle, forces memory ownership
+   * @param rect bounding rectangle to mask over
+   * @param pixel_expand expand offset in pixels for each point (0 by default)
+   */
+  void MaskImageRegionRectangle(Rectangle rect, int pixel_expand = 0) throw (std::exception);
+
+  /**
+   * @brief Masks image region specified by quadrangle, forces memory ownership
+   * @param quad quadrangle to mask over
+   * @param pixel_expand expand offset in pixels for each point (0 by default)
+   */
+  void MaskImageRegionQuadrangle(Quadrangle quad, int pixel_expand = 0) throw (std::exception);
 
 public:
   char* data;   ///< Pointer to the first pixel of the first row

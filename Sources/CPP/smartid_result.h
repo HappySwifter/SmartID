@@ -12,8 +12,8 @@
 #define SMARTID_ENGINE_SMARTID_RESULT_H_INCLUDED_
 
 #if defined _MSC_VER
-#pragma warning(push)  
-#pragma warning(disable : 4290)  
+#pragma warning(push)
+#pragma warning(disable : 4290)
 #endif
 
 #include "smartid_common.h"
@@ -36,7 +36,7 @@ public:
   OcrCharVariant();
 
   /// OcrCharVariant dtor
-  ~OcrCharVariant() {}
+  ~OcrCharVariant();
 
   /**
    * @brief Ctor from utf16 character and confidence
@@ -88,10 +88,11 @@ public:
    * @param is_corrected - whether this OcrChar was corrected by post-processing
    */
   OcrChar(const std::vector<OcrCharVariant>& ocr_char_variants,
-          bool is_highlighted, bool is_corrected);
+          bool is_highlighted, bool is_corrected,
+          const Rectangle& ocr_char_rect = {});
 
   /// OcrChar dtor
-  ~OcrChar() {}
+  ~OcrChar();
 
   /// Vector with possible recognition results for a given character
   const std::vector<OcrCharVariant>& GetOcrCharVariants() const;
@@ -116,10 +117,18 @@ public:
    */
   std::string GetUtf8Character() const throw(std::exception);
 
+  /**
+   * @brief Returns the rect position of char on field's image
+   *
+   */
+
+  const Rectangle& GetRectangle() const;
+
 private:
   std::vector<OcrCharVariant> ocr_char_variants_;
   bool is_highlighted_;
   bool is_corrected_;
+  Rectangle rect_;
 };
 
 /**
@@ -136,7 +145,7 @@ public:
    */
   OcrString(const std::string& utf8_string);
   /// OcrString dtor
-  ~OcrString() {}
+  ~OcrString();
 
   /// Vector with OCR information for each character
   const std::vector<OcrChar>& GetOcrChars() const;
@@ -148,7 +157,7 @@ public:
   std::vector<uint16_t> GetUtf16String() const;
 
 private:
-  std::vector<OcrChar> ocr_chars_;
+  std::vector<OcrChar> ocr_chars_; ///< Vector with OCR information for each character
 };
 
 /**
@@ -167,43 +176,34 @@ public:
    * @param name - name of the field
    * @param value - OcrString-representation of the field value
    * @param is_accepted - whether the system is confident in the field's value
-   * @param confidence - system's confidence level in fields' value in range
-   * [0..1]
+   * @param confidence - system's confidence level in fields' value in range [0..1\
+   * @param attributes - additional field information
    *
    * @throws std::invalid_argument if confidence value is not in range [0..1]
    */
-  StringField(const std::string& name, const OcrString& value, bool is_accepted,
-              double confidence) throw(std::exception);
+  StringField(const std::string& name, const OcrString& value,
+              bool is_accepted, double confidence,
+              const std::map<std::string, std::string>& attributes = {}) throw(std::exception);
 
   /**
    * @brief StringField ctor from utf8-string value
    * @param name - name of the field
    * @param value - utf8-string representation of the field value
    * @param is_accepted - whether the system is confident in the field's value
-   * @param confidence - system's confidence level in fields' value in range
-   * [0..1]
+   * @param confidence - system's confidence level in fields' value in range [0..1]
+   * @param attributes - additional field information
    *
    * @throws std::invalid_argument if confidence value is not in range [0..1] or
    *         if failed to decode utf8-string 'value'
    */
   StringField(const std::string& name, const std::string& value,
-              bool is_accepted, double confidence) throw(std::exception);
+              bool is_accepted, double confidence,
+              const std::map<std::string, std::string>& attributes = {}) throw(std::exception);
 
   /**
-  * @brief StringField ctor from utf8-string value (with raw value)
-  * @param name - name of the field
-  * @param value - utf8-string representation of the field value
-  * @param raw_value - utf8-string representation of the field raw value
-  * @param is_accepted - whether the system is confident in the field's value
-  * @param confidence - system's confidence level in fields' value in range
-  * [0..1]
-  *
-  * @throws std::invalid_argument if confidence value is not in range [0..1] or
-  *         if failed to decode utf8-string 'value'
-  */
-  StringField(const std::string& name, const std::string& value, 
-    const std::string& raw_value, bool is_accepted, double confidence) 
-    throw(std::exception);
+   * @brief Destructor
+   */
+  ~StringField();
 
   /// Getter for string field name
   const std::string& GetName() const;
@@ -211,25 +211,43 @@ public:
   const OcrString& GetValue() const;
   /// Getter for string field value (Utf8-string representation)
   std::string GetUtf8Value() const;
-  /// Getter for string field raw(without postprocessing) value (OcrString representation)
-  const OcrString& GetRawValue() const;
-  /// Getter for string field raw(without postprocessing) value (Utf8-string representation)
-  std::string GetUtf8RawValue() const;
   /// Whether the system is confidence in field recognition result
   bool IsAccepted() const;
   /// The system's confidence level in field recognition result (in range
   /// [0..1])
   double GetConfidence() const;
 
+  /// Returns a vector of attribute names
+  std::vector<std::string> GetAttributeNames() const;
+
+  /// Getter for attributes map
+  const std::map<std::string, std::string> &GetAttributes() const;
+
+  /**
+   * @brief Check if attribute with given name is present
+   * @param attribute_name attribute name to check presence of
+   * @return true if attribute with given name is present
+   */
+  bool HasAttribute(const std::string &attribute_name) const;
+
+  /**
+   * @brief Get attribute value by its name
+   * @param attribute_name key attribute name
+   * @return attribute value by its name
+   */
+  const std::string &GetAttribute(const std::string &attribute_name) const
+      throw(std::exception);
+
 private:
   std::string name_; ///< Field name
   OcrString value_;  ///< Fields' OcrString value
-  OcrString raw_value_; ///< Fields' OcrString raw value(without postprocessing)
 
   /// Specifies whether the system is confident in field recognition result
   bool is_accepted_;
   /// Specifies the system's confidence level in field recognition result
   double confidence_;
+
+  std::map<std::string, std::string> attributes_; ///< Field attributes
 };
 
 /**
@@ -257,7 +275,7 @@ public:
              double confidence) throw(std::exception);
 
   /// Default dtor
-  ~ImageField() {}
+  ~ImageField();
 
   /// Getter for image field name
   const std::string& GetName() const;
@@ -269,8 +287,8 @@ public:
   double GetConfidence() const;
 
 private:
-  std::string name_;
-  Image value_;
+  std::string name_; ///< Image field name
+  Image value_;      ///< Image field value (internal image storage)
 
   bool is_accepted_;  ///< Specifies whether the system is confident in result
   double confidence_; ///< Specifies the system's confidence level in result
@@ -294,27 +312,41 @@ public:
    */
   MatchResult(const std::string& tpl_type,
               const Quadrangle& quadrangle,
-              bool accepted = false);
+              bool accepted = false,
+              double confidence = 0.0,
+              int standard_width = 0,
+              int standard_height = 0);
 
-  /// Default dtor
-  ~MatchResult() {}
+  /**
+   * @brief Destructor
+   */
+  ~MatchResult();
 
   /// Getter for document type string
   const std::string& GetTemplateType() const;
   /// Getter for document quadrangle
   const Quadrangle& GetQuadrangle() const;
+  /// Getter for standard template width in pixels
+  int GetStandardWidth() const;
+  /// Getter for standard template height in pixels
+  int GetStandardHeight() const;
   /// Getter for acceptance field
   bool GetAccepted() const;
+  /// Getter for confidence field
+  double GetConfidence() const;
 
-public:
+private:
   std::string template_type_; ///< Template type for this match result
   Quadrangle quadrangle_; ///< Quadrangle for this template
+  int standard_width_;    ///< Standard width for this template type
+  int standard_height_;   ///< Standard height for this template type
   bool accepted_; ///< Whether this result is ready to be visualized
+  double confidence_; ///< System's confidence level in match result
 };
 
 /**
  * @brief Class represents SmartID segmentation result containing
- * found zones/fields location information
+ * found raw fields location information
  */
 class SMARTID_DLL_EXPORT SegmentationResult {
 public:
@@ -322,43 +354,54 @@ public:
   SegmentationResult();
 
   /// Main constructor
-  SegmentationResult(const std::map<std::string, Quadrangle>& zone_quadrangles,
-                     bool accepted = false);
+  SegmentationResult(
+      const std::map<std::string, Quadrangle>& raw_fields_quadrangles,
+      const std::map<std::string, Quadrangle>& raw_fields_template_quadrangles,
+      bool accepted = false);
 
-  /// Destructor
+  /**
+   * @brief Destructor
+   */
   ~SegmentationResult();
 
-  /// Getter for zone names which are keys for ZoneQuadrangles map
-  std::vector<std::string> GetZoneNames() const;
+  /// Getter for raw fields names which are keys for RawFieldQuadrangles map
+  std::vector<std::string> GetRawFieldsNames() const;
 
-  /// Checks if there is a zone quadrangle with given zone_name
-  bool HasZoneQuadrangle(const std::string &zone_name) const;
-
-  /**
-   * @brief Get zone quadrangle for zone name
-   * @param zone_name zone name
-   * @return Zone quadrangle for zone name
-   * @throws std::invalid_argument if zone_name is not present in zone quadrangles
-   */
-  const Quadrangle& GetZoneQuadrangle(const std::string &zone_name) const throw (std::exception);
-
-  /// Getter for zone quadrangles (zone name -> quadrangle]
-  const std::map<std::string, Quadrangle>& GetZoneQuadrangles() const;
+  /// Checks if there is a raw field quadrangle with given raw field name
+  bool HasRawFieldQuadrangle(const std::string &raw_field_name) const;
 
   /**
-   * @brief Gets field name corresponding to this zone
-   * @param zone_name zone name
-   * @return Field name for this zone, could be the same as zone_name
-   * @throws std::invalid_argument if zone_name is not present in zone quadrangles
+   * @brief Get raw field quadrangle for raw field name
+   * @param raw_field_name Raw field name
+   * @return Raw field quadrangle for raw field name
+   * @throws std::invalid_argument if raw_field_name is not present in raw field quadrangles
    */
-  std::string GetZoneFieldName(const std::string &zone_name) const throw (std::exception);
+  const Quadrangle& GetRawFieldQuadrangle(const std::string &raw_field_name) const throw (std::exception);
+
+  /// Getter for raw field quadrangles (raw field name -> quadrangle]
+  const std::map<std::string, Quadrangle>& GetRawFieldQuadrangles() const;
+
+  /**
+   * @brief Get raw field quadrangle for raw field name in template coordinates
+   * @param raw_field_name Raw field name
+   * @return Raw field quadrangle for raw field name in template coordinates
+   * @throws std::invalid_argument if raw_field_name is not present in raw field quadrangles
+   */
+  const Quadrangle& GetRawFieldTemplateQuadrangle(const std::string &raw_field_name) const throw (std::exception);
+
+  /// Getter for raw field quadrangles in template coordinates (raw field name -> quadrangle]
+  const std::map<std::string, Quadrangle>& GetRawFieldTemplateQuadrangles() const;
 
   /// Getter for accepted field
   bool GetAccepted() const;
 
 private:
-  std::map<std::string, Quadrangle> zone_quadrangles_; ///< [zone name, quadrangle]
-  bool accepted_; ///< Whether this result is ready to be visualized
+  /// [raw field name, quadrangle]
+  std::map<std::string, Quadrangle> raw_field_quadrangles_;
+  /// [raw field name, quadrangle in template coords]
+  std::map<std::string, Quadrangle> raw_field_template_quadrangles_;
+  /// Whether this result is ready to be visualized
+  bool accepted_;
 };
 
 /**
@@ -376,13 +419,17 @@ public:
    */
   RecognitionResult(const std::map<std::string, StringField>& string_fields,
                     const std::map<std::string, ImageField>& image_fields,
+                    const std::map<std::string, StringField>& raw_string_fields,
+                    const std::map<std::string, ImageField>& raw_image_fields,
                     const std::string& document_type,
                     const std::vector<MatchResult>& match_results,
                     const std::vector<SegmentationResult>& segmentation_results,
                     bool is_terminal);
 
   /// RecognitionResult dtor
-  ~RecognitionResult() {}
+  ~RecognitionResult();
+
+  //////////////////// String Fields ////////////////////
 
   /// Returns a vector of unique string field names
   std::vector<std::string> GetStringFieldNames() const;
@@ -416,6 +463,8 @@ public:
    */
   void SetStringFields(const std::map<std::string, StringField>& string_fields);
 
+  //////////////////// Image Fields ////////////////////
+
   /// Returns a vector of unique image field names
   std::vector<std::string> GetImageFieldNames() const;
   /// Checks if there is a image field with given name
@@ -448,6 +497,76 @@ public:
    */
   void SetImageFields(const std::map<std::string, ImageField>& image_fields);
 
+  ///// Raw (only current frame, no postprocessing) String Fields /////
+
+  /// Returns a vector of unique raw string field names
+  std::vector<std::string> GetRawStringFieldNames() const;
+  /// Checks if there is a raw string field with given name
+  bool HasRawStringField(const std::string& name) const;
+
+  /**
+   * @brief Gets raw string field by name
+   * @param name - name of a raw string field
+   *
+   * @throws std::invalid_argument if there is no such field
+   */
+  const StringField& GetRawStringField(
+      const std::string& name) const throw(std::exception);
+
+  /**
+   * @brief Getter for raw string fields map
+   * @return constref for raw string fields map
+   */
+  const std::map<std::string, StringField>& GetRawStringFields() const;
+
+  /**
+   * @brief Getter for (mutable) raw string fields map
+   * @return ref for raw string fields map
+   */
+  std::map<std::string, StringField>& GetRawStringFields();
+
+  /**
+   * @brief Setter for raw string fields map
+   * @param raw_string_fields - raw string fields map
+   */
+  void SetRawStringFields(const std::map<std::string, StringField>& raw_string_fields);
+
+  ///// Raw (only current frame, no postprocessing) Image Fields /////
+
+  /// Returns a vector of unique raw image field names
+  std::vector<std::string> GetRawImageFieldNames() const;
+  /// Checks if there is a raw image field with given name
+  bool HasRawImageField(const std::string& name) const;
+
+  /**
+   * @brief Gets raw image field by name
+   * @param name - raw name of an image field
+   *
+   * @throws std::invalid_argument if there is no such field
+   */
+  const ImageField& GetRawImageField(
+      const std::string& name) const throw(std::exception);
+
+  /**
+   * @brief Getter for raw image fields map
+   * @return constref for raw image fields map
+   */
+  const std::map<std::string, ImageField>& GetRawImageFields() const;
+
+  /**
+   * @brief Getter for (mutable) raw image fields map
+   * @return ref for raw image fields map
+   */
+  std::map<std::string, ImageField>& GetRawImageFields();
+
+  /**
+   * @brief Setter for raw image fields map
+   * @param raw_image_fields - raw image fields map
+   */
+  void SetRawImageFields(const std::map<std::string, ImageField>& raw_image_fields);
+
+  //////////////////// Document Type ////////////////////
+
   /// Getter for document type name. Empty string means empty result (no
   /// document match happened yet)
   const std::string& GetDocumentType() const;
@@ -455,17 +574,23 @@ public:
   /// Setter for document type name
   void SetDocumentType(const std::string& doctype);
 
+  //////////////////// Match Results ////////////////////
+
   /// Getter for match results - contains the most 'fresh' template quadrangles
   /// information available
   const std::vector<MatchResult>& GetMatchResults() const;
   /// Setter for match results
   void SetMatchResults(const std::vector<MatchResult>& match_results);
 
-  /// Getter for segmentation results - contains the most 'fresh' zones
+  //////////////////// Segmentation Results ////////////////////
+
+  /// Getter for segmentation results - contains the most 'fresh' raw fields
   /// and fields location information available
   const std::vector<SegmentationResult>& GetSegmentationResults() const;
   /// Setter for segmentation results
   void SetSegmentationResults(const std::vector<SegmentationResult>& segmentation_results);
+
+  //////////////////// Is Terminal ////////////////////
 
   /**
    * @brief Whether the systems regards that result as 'final'.
@@ -478,10 +603,38 @@ public:
 private:
   std::map<std::string, StringField> string_fields_;
   std::map<std::string, ImageField> image_fields_;
+  std::map<std::string, StringField> raw_string_fields_;
+  std::map<std::string, ImageField> raw_image_fields_;
   std::string document_type_;
   std::vector<MatchResult> match_results_;
   std::vector<SegmentationResult> segmentation_results_;
   bool is_terminal_;
+};
+
+/**
+ * @brief Feedback data that is returned by the ResultReporterInterface's
+ * FeedbackReceived method, containing useful user-oriented information
+ * such as additional visualization, advisory information etc
+ */
+class SMARTID_DLL_EXPORT ProcessingFeedback {
+public:
+  /// Default constructor
+  ProcessingFeedback();
+
+  /// Main constructor
+  ProcessingFeedback(const std::map<std::string, Quadrangle> &quadrangles);
+
+  /// Destructor
+  ~ProcessingFeedback();
+
+  /**
+   * @brief Getter for arbitrary quadrangles feedback data
+   * @return map with quadrangles feedback data
+   */
+  const std::map<std::string, Quadrangle>& GetQuadrangles() const;
+
+private:
+  std::map<std::string, Quadrangle> quadrangles_; ///< quadrangle data
 };
 
 /**
@@ -495,21 +648,27 @@ public:
    * @brief  Callback tells that last snapshot is not going to be
    *         processed/recognized. Optional
    */
-  virtual void SnapshotRejected() {}
+  virtual void SnapshotRejected();
+
+  /**
+   * @brief FeedbackReceived
+   * @param processing_feedback processing feedback data returned by the core
+   */
+  virtual void FeedbackReceived(const ProcessingFeedback& processing_feedback);
 
   /**
    * @brief  Callback tells that last snapshot has valid document and
              contains document match result. Optional
-   * @param  match_result   Document match result - vector of found templates
+   * @param  match_results   Document match result - vector of found templates
    */
-  virtual void DocumentMatched(const std::vector<MatchResult>& match_results) {}
+  virtual void DocumentMatched(const std::vector<MatchResult>& match_results);
 
   /**
-   * @brief  Callback tells that last snapshot was segmented into fields and zones
+   * @brief  Callback tells that last snapshot was segmented into raw fields
    *         for each match result. Optional.
    * @param segmentation_results Segmentation results for each corresponding MatchResult
    */
-  virtual void DocumentSegmented(const std::vector<SegmentationResult>& segmentation_results) {}
+  virtual void DocumentSegmented(const std::vector<SegmentationResult>& segmentation_results);
 
   /**
    * @brief  Callback tells that last snapshot was processed
@@ -521,18 +680,88 @@ public:
   /**
    * @brief Internal callback to stop the session (determined by internal timer)
    */
-  virtual void SessionEnded() {}
+  virtual void SessionEnded();
 
   /**
    * @brief  Destructor
    */
-  virtual ~ResultReporterInterface() {}
+  virtual ~ResultReporterInterface();
+};
+
+/**
+ * @brief IntegratedFieldState class - integrated field terminality state
+ */
+class SMARTID_DLL_EXPORT IntegratedFieldState {
+public:
+  /**
+   * @brief Default ctor
+   */
+  explicit IntegratedFieldState(bool is_terminal = false);
+
+  /**
+   * @brief Whether the systems regards that result for the field as 'final'.
+   */
+  bool IsTerminal() const;
+  /// Setter for IsTerminal flag
+  void SetIsTerminal(bool is_terminal);
+
+private:
+  bool is_terminal_;
+};
+
+/**
+ * @brief SessionState class - optional recognition session information
+ */
+class SMARTID_DLL_EXPORT SessionState {
+public:
+  virtual ~SessionState();
+
+  /// Returns a vector of unique integrated field state names
+  std::vector<std::string> GetIntegratedFieldStateNames() const;
+  /// Checks if there is an integrated field state with given name
+  bool HasIntegratedFieldState(const std::string& name) const;
+
+  /**
+   * @brief Gets integrated field state by name
+   * @param name - name of an integrated field state
+   *
+   * @throws std::invalid_argument if there is no such field state
+   */
+  const IntegratedFieldState& GetStringFieldState(
+      const std::string& name) const throw(std::exception);
+
+  /**
+   * @brief Getter for integrated field states map
+   * @return constref for integrated field states map
+   */
+  const std::map<std::string, IntegratedFieldState>& GetIntegratedFieldStates() const;
+
+  /**
+   * @brief Getter for (mutable) integrated field states map
+   * @return ref for integrated field states map
+   */
+  std::map<std::string, IntegratedFieldState>& GetIntegratedFieldStates();
+
+  /**
+   * @brief Setter for integrated field states map
+   * @param integrated_field_states - integrated field states map
+   */
+  void SetIntegratedFieldStates(const std::map<std::string, IntegratedFieldState>& integrated_field_states);
+
+  int GetSnapshotsProcessed() const;
+
+protected:
+  std::map<std::string, IntegratedFieldState> integrated_field_states_;
+  int snapshots_processed_;
+
+  /// Disabled default constructor - use ... instead
+  SessionState(int snapshots_processed);
 };
 
 } } // namespace se::smartid
 
 #if defined _MSC_VER
-#pragma warning(pop)  
+#pragma warning(pop)
 #endif
 
 #endif // SMARTID_ENGINE_SMARTID_RESULT_H_INCLUDED
