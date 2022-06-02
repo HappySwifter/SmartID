@@ -192,14 +192,14 @@ struct SmartIDResultReporter : public se::smartid::ResultReporterInterface {
 
 - (NSString *) pathForSingleDataArchive {
     NSBundle *bundle = [NSBundle bundleForClass:[self classForCoder]];
-    NSString *dataPath = [bundle pathForResource:@"bundle_full_mobile" ofType:@"zip"];
-//    NSArray *listdir = [NSArray arrayWithObject:dataPath];
-//    NSPredicate *zipFilter = [NSPredicate predicateWithFormat:@"self ENDSWITH '.zip'"];
-//    NSArray *zipArchives = [listdir filteredArrayUsingPredicate:zipFilter];
-//    NSAssert(zipArchives.count == 1, @"data-zip folder must contain single .zip archive");
-//    NSString *zipName = [zipArchives objectAtIndex:0];
-//    NSString *zipPath = [dataPath stringByAppendingPathComponent:zipName];
-    return dataPath;
+    NSString *dataPath = [bundle pathForResource:@"data-zip" ofType:nil];
+    NSArray *listdir = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:dataPath error:nil];
+    NSPredicate *zipFilter = [NSPredicate predicateWithFormat:@"self ENDSWITH '.zip'"];
+    NSArray *zipArchives = [listdir filteredArrayUsingPredicate:zipFilter];
+    NSAssert(zipArchives.count == 1, @"data-zip folder must contain single .zip archive");
+    NSString *zipName = [zipArchives objectAtIndex:0];
+    NSString *zipPath = [dataPath stringByAppendingPathComponent:zipName];
+    return zipPath;
 }
 
 #pragma mark SmartIDResultReporter implementation
